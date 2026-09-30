@@ -87,7 +87,7 @@ Stream URLs may carry authentication in the query string (e.g. access tokens or 
 - Android system logs (`logcat`)
 - The app's process memory
 
-This is acceptable for on-device use but be aware if sharing debug logs.
+This is acceptable for on-device use but be aware if sharing debug logs. See [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Building
 
@@ -112,9 +112,5 @@ Built with:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. Third-party library notices and licenses are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-### Third-Party Licenses
-* **libVLC** (`org.videolan.android:libvlc-all`): Licensed under LGPL 2.1 or later.
-* **Meta Spatial SDK**: Licensed under Meta's proprietary SDK License.
-* **AndroidX / Jetpack Compose**: Licensed under Apache 2.0.

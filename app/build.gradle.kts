@@ -5,6 +5,20 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.plugin.compose)
 }
 
+val envVersionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0-dev"
+val envVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
+val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+val storePassword = System.getenv("ANDROID_STORE_PASSWORD")
+val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+val isSigningConfigured = !keystorePath.isNullOrBlank() &&
+    !storePassword.isNullOrBlank() &&
+    !keyAlias.isNullOrBlank() &&
+    !keyPassword.isNullOrBlank() &&
+    file(keystorePath).exists()
+
 android {
     namespace = "com.jmez11.deadeasyplayer"
     compileSdk = 34
@@ -14,8 +28,23 @@ android {
         minSdk = 29
         //noinspection OldTargetApi,ExpiredTargetSdkVersion
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = envVersionCode
+        versionName = envVersionName
+
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+    }
+
+    signingConfigs {
+        if (isSigningConfigured) {
+            create("release") {
+                storeFile = file(keystorePath!!)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
     }
 
     packaging { resources.excludes.add("META-INF/LICENSE") }
@@ -29,6 +58,9 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (isSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -67,11 +99,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons)
-
-    // Media3 / ExoPlayer
-    // implementation(libs.media3.exoplayer)
-    // implementation("androidx.media3:media3-ui:1.3.1")
-    // implementation(libs.media3.common)
 
     // Tests
     testImplementation("junit:junit:4.13.2")

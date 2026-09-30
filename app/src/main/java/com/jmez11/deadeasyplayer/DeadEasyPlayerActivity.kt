@@ -58,6 +58,30 @@ enum class ProjectionMode(val constantValue: Int) {
     OU(2)
 }
 
+private val SBS_REGEX = Regex("""(?:^|[._\- ])(?:h?sbs|hs?bs)(?:[._\- ]|$)""", RegexOption.IGNORE_CASE)
+private val OU_REGEX = Regex("""(?:^|[._\- ])(?:h?ou|ho?u)(?:[._\- ]|$)""", RegexOption.IGNORE_CASE)
+
+fun detectProjectionMode(filename: String): ProjectionMode {
+    return when {
+        SBS_REGEX.containsMatchIn(filename) -> ProjectionMode.SBS
+        OU_REGEX.containsMatchIn(filename) -> ProjectionMode.OU
+        else -> ProjectionMode.MONO
+    }
+}
+
+fun formatDuration(ms: Long): String {
+    if (ms <= 0) return "0:00"
+    val totalSeconds = ms / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) {
+        String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(java.util.Locale.US, "%d:%02d", minutes, seconds)
+    }
+}
+
 class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.OnNewVideoLayoutListener, SurfaceHolder.Callback {
 
     private lateinit var libVlc: LibVLC
@@ -92,6 +116,7 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
 
     // Error
     private val errorMessage = mutableStateOf<String?>(null)
+    private val stereoError = mutableStateOf<String?>(null)
 
     // Launch mode: true = launched from app launcher (show file browser), false = launched from intent with video
     private val launchedStandalone = mutableStateOf(false)
@@ -145,6 +170,19 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val intentUri: Uri? = intent.data
+        if (intentUri != null) {
+            launchedStandalone.value = false
+            val startPos = intent.getIntExtra("position", -1)
+            videoTitle = intent.getStringExtra("title") ?: ""
+            val filename = intent.getStringExtra("filename") ?: (intentUri.lastPathSegment ?: intentUri.toString())
+            loadVideo(intentUri, filename, startPos)
+        }
+    }
+
     private fun setupPlayerEvents() {
         player.setEventListener { event ->
             when (event.type) {
@@ -186,13 +224,8 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
 
         Log.i("DeadEasyPlayer", "Raw filename resolved for 3D detect: $filename")
 
-        if (filename.contains("3D", ignoreCase = true) && filename.contains("SBS", ignoreCase = true)) {
-            projectionMode.value = ProjectionMode.SBS
-        } else if (filename.contains("3D", ignoreCase = true) && filename.contains("OU", ignoreCase = true)) {
-            projectionMode.value = ProjectionMode.OU
-        } else {
-            projectionMode.value = ProjectionMode.MONO
-        }
+        val detectedMode = detectProjectionMode(filename)
+        projectionMode.value = detectedMode
 
         val media = try {
             if (uri.scheme == "content") {
@@ -214,8 +247,16 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
             media.addOption(":start-time=${startPos / 1000f}")
         }
         player.media = media
+        currentTimeString.value = "0:00"
+        durationString.value = "0:00"
+        progress.floatValue = 0f
         isBuffering.value = true
         showPlayer.value = true
+
+        if (surfaceView != null) {
+            updateStereoSurface(detectedMode)
+            player.play()
+        }
     }
 
     // --- Key Events (Joystick volume) ---
@@ -298,8 +339,14 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
                 sv.requestLayout()
                 sv.invalidate()
             }
+            stereoError.value = null
         } catch (e: Exception) {
             Log.e("DeadEasyPlayer", "Failed to set stereo mode", e)
+            if (mode != ProjectionMode.MONO) {
+                stereoError.value = "Stereo 3D mode unavailable; falling back to 2D mono."
+            } else {
+                stereoError.value = null
+            }
         }
     }
 
@@ -470,6 +517,37 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
                     strokeWidth = 4.dp,
                     modifier = Modifier.size(64.dp)
                 )
+            }
+
+            // Stereo fallback error banner
+            stereoError.value?.let { errorText ->
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp, start = 24.dp, end = 24.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xCCB00020))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = errorText,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        TextButton(
+                            onClick = { stereoError.value = null },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("Dismiss", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                }
             }
 
             // Top bar (Matches Plezy style)
@@ -924,16 +1002,6 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
                 colors = RadioButtonDefaults.colors(selectedColor = Color.White, unselectedColor = Color.Gray)
             )
         }
-    }
-
-    private fun formatDuration(ms: Long): String {
-        if (ms <= 0) return "0:00"
-        val totalSeconds = ms / 1000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-        return if (hours > 0) String.format("%d:%02d:%02d", hours, minutes, seconds)
-        else String.format("%d:%02d", minutes, seconds)
     }
 
     override fun onDestroy() {
