@@ -89,14 +89,6 @@ Stream URLs may carry authentication in the query string (e.g. access tokens or 
 
 This is acceptable for on-device use but be aware if sharing debug logs.
 
-## Known v1 Limitations
-
-- **No media library browsing** — uses file picker or external intents
-- **No subtitle selection UI** — basic subtitle rendering
-- **No watch-state sync** — playback position is not reported back to external servers
-- **No passthrough mode** — plays in fully immersive VR only
-- **No curved screen** — uses a flat quad screen
-
 ## Building
 
 ### Prerequisites
