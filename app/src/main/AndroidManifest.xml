@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="1"
-    android:versionName="1.0"
     android:installLocation="auto">
 
     <uses-feature android:name="android.hardware.vr.headtracking" android:required="false" />
@@ -21,7 +19,9 @@
             android:exported="true"
             android:theme="@android:style/Theme.Black.NoTitleBar"
             android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode|density"
-            android:launchMode="standard"
+            android:launchMode="singleTask"
+            android:documentLaunchMode="never"
+            android:taskAffinity="com.jmez11.deadeasyplayer"
             android:resizeableActivity="true">
 
             <layout android:defaultWidth="1280dp" android:defaultHeight="720dp" android:gravity="center" />
@@ -29,10 +29,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                
             </intent-filter>
-
-            <layout android:defaultWidth="1280dp" android:defaultHeight="720dp" android:gravity="center" />
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
