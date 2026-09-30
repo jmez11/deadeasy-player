@@ -20,6 +20,8 @@
             android:theme="@android:style/Theme.Black.NoTitleBar"
             android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode|density"
             android:launchMode="singleTask"
+            android:documentLaunchMode="never"
+            android:taskAffinity="com.jmez11.deadeasyplayer"
             android:resizeableActivity="true">
 
             <layout android:defaultWidth="1280dp" android:defaultHeight="720dp" android:gravity="center" />

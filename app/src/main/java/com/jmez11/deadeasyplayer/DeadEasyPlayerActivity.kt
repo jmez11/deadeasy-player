@@ -227,6 +227,14 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
         val detectedMode = detectProjectionMode(filename)
         projectionMode.value = detectedMode
 
+        // Always stop existing playback and release old media before loading new media
+        if (::player.isInitialized) {
+            player.stop()
+            val oldMedia = player.media
+            player.media = null
+            oldMedia?.release()
+        }
+
         val media = try {
             if (uri.scheme == "content") {
                 val fd = contentResolver.openFileDescriptor(uri, "r")
@@ -247,13 +255,22 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
             media.addOption(":start-time=${startPos / 1000f}")
         }
         player.media = media
+
         currentTimeString.value = "0:00"
         durationString.value = "0:00"
         progress.floatValue = 0f
         isBuffering.value = true
         showPlayer.value = true
 
-        if (surfaceView != null) {
+        val sv = surfaceView
+        if (sv != null) {
+            if (!player.vlcVout.areViewsAttached()) {
+                player.vlcVout.setVideoSurface(sv.holder.surface, sv.holder)
+                subtitleSurfaceView?.let { subSv ->
+                    player.vlcVout.setSubtitlesSurface(subSv.holder.surface, subSv.holder)
+                }
+                player.vlcVout.attachViews(this)
+            }
             updateStereoSurface(detectedMode)
             player.play()
         }
@@ -1001,6 +1018,13 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
                 onClick = { setProjection(mode) },
                 colors = RadioButtonDefaults.colors(selectedColor = Color.White, unselectedColor = Color.Gray)
             )
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (::player.isInitialized && player.isPlaying) {
+            player.pause()
         }
     }
 
