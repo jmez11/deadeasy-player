@@ -8,16 +8,16 @@ plugins {
 val envVersionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0-dev"
 val envVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
-val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
-val storePassword = System.getenv("ANDROID_STORE_PASSWORD")
-val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+val envKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+val envStorePassword = System.getenv("ANDROID_STORE_PASSWORD")
+val envKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+val envKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
 
-val isSigningConfigured = !keystorePath.isNullOrBlank() &&
-    !storePassword.isNullOrBlank() &&
-    !keyAlias.isNullOrBlank() &&
-    !keyPassword.isNullOrBlank() &&
-    file(keystorePath).exists()
+val isSigningConfigured = !envKeystorePath.isNullOrBlank() &&
+    !envStorePassword.isNullOrBlank() &&
+    !envKeyAlias.isNullOrBlank() &&
+    !envKeyPassword.isNullOrBlank() &&
+    file(envKeystorePath).exists()
 
 android {
     namespace = "com.jmez11.deadeasyplayer"
@@ -39,10 +39,10 @@ android {
     signingConfigs {
         if (isSigningConfigured) {
             create("release") {
-                storeFile = file(keystorePath!!)
-                this.storePassword = storePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+                storeFile = file(envKeystorePath!!)
+                storePassword = envStorePassword
+                keyAlias = envKeyAlias
+                keyPassword = envKeyPassword
             }
         }
     }
