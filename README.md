@@ -2,16 +2,18 @@
 
 [![Android CI](https://github.com/jmez11/deadeasy-player/actions/workflows/android.yml/badge.svg)](https://github.com/jmez11/deadeasy-player/actions/workflows/android.yml)
 
-A native Android VR cinema player for Meta Quest 3 that plays SBS/OU 3D video
-in true per-eye stereoscopic 3D. Designed as an immersive VR media player
+A native Android VR media player for Meta VR devices that plays SBS/OU 3D video
+in true per-eye stereoscopic 3D. Designed as a media player
 supporting both standalone file selection and external intent integration.
 
 ## What It Does
 
-- Plays video streams in an immersive VR cinema environment on Quest 3
+- Plays video streams in VR on Quest 3
 - Supports **Side-by-Side (SBS)**, **Over-Under (OU)**, and **2D (mono)**
   projection modes with true per-eye stereoscopic rendering
-- Auto-detects projection mode from filename tags (`.SBS.`, `.OU.`, `.HSBS.`,
+- Subtitle selection
+- Audio stream selection
+- Auto-detects projection mode from filename `3D` + (`.SBS.`, `.OU.`, `.HSBS.`,
   `.HOU.`)
 - Minimal on-screen controls: play/pause, seek bar, projection selector, exit
 - Uses libVLC for hardware-accelerated video decoding
