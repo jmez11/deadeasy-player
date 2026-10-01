@@ -144,6 +144,7 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
         val args = ArrayList<String>()
         args.add("-vvv")
         args.add("--vout=android_display")
+        args.add("--sub-track=9999")
         libVlc = LibVLC(this, args)
         player = MediaPlayer(libVlc)
         setupPlayerEvents()
