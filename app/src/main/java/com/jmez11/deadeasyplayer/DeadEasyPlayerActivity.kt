@@ -344,9 +344,9 @@ class DeadEasyPlayerActivity : ComponentActivity(), IVLCVout.Callback, IVLCVout.
             method.invoke(null, sv, constantValue)
             Log.i("DeadEasyPlayer", "Successfully set stereo mode to $mode with value $constantValue")
 
-            // Also apply stereo mode to subtitle surface
+            // Keep subtitle surface in 2D Mono mode (0) so LibVLC's 2D subtitles render for both eyes
             subtitleSurfaceView?.let { subSv ->
-                method.invoke(null, subSv, constantValue)
+                method.invoke(null, subSv, 0)
                 subSv.post {
                     subSv.requestLayout()
                     subSv.invalidate()
